@@ -25,10 +25,10 @@ max_length = 4
 # 데이터 처리에 사용할 vocabulary
 characters = "kyf3456rhnbpedcgwmx827a"
 # 문자를 정수형으로 매핑
-char_to_num = keras.layers.StringLookup(vocabulary=list(characters), mask_token=None)
+char_to_num = keras.layers.experimental.preprocessing.StringLookup(vocabulary=list(characters), mask_token=None)
 # 정수를 문자로 매핑
-num_to_char = keras.layers.StringLookup(vocabulary=char_to_num.get_vocabulary(), mask_token=None, invert=True)
-
+num_to_char = keras.layers.experimental.preprocessing.StringLookup(vocabulary=char_to_num.get_vocabulary(), mask_token=None, invert=True)
+# Use "keras.layers.StringLookup" if tensorflow version >=2.4 else "keras.layers.experimental.preprocessing.StringLookup"
 
 # 이미지 전처리
 def encode_single_sample(img_path):

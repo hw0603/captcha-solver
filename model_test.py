@@ -29,10 +29,10 @@ characters = "kyf3456rhnbpedcgwmx827a_.ijloqstuvz019"
 # characters = "abcdefghijklmnopqrstuvwxyz0123456789_. "
 
 # Mapping characters to integers
-char_to_num = keras.layers.StringLookup(vocabulary=list(characters), mask_token=None)
+char_to_num = keras.layers.experimental.preprocessing.StringLookup(vocabulary=list(characters), mask_token=None)
 
 # Mapping integers back to original characters
-num_to_char = keras.layers.StringLookup(
+num_to_char = keras.layers.experimental.preprocessing.StringLookup(
     vocabulary=char_to_num.get_vocabulary(), mask_token=None, invert=True
 )
 
