@@ -93,10 +93,10 @@ max_length = max([len(label) for label in labels])
 
 
 # Mapping characters to integers
-char_to_num = layers.StringLookup(vocabulary=list(characters), mask_token=None)
+char_to_num = keras.layers.StringLookup(vocabulary=list(characters), mask_token=None)
 
 # Mapping integers back to original characters
-num_to_char = layers.StringLookup(
+num_to_char = keras.layers.StringLookup(
     vocabulary=char_to_num.get_vocabulary(), mask_token=None, invert=True
 )
 
@@ -178,7 +178,7 @@ plt.show()
 ## Model
 """
 
-
+# pylint: disable=unexpected-keyword-arg, no-value-for-parameter
 class CTCLayer(layers.Layer):
     def __init__(self, name=None):
         super().__init__(name=name)
