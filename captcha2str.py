@@ -7,6 +7,8 @@ import os
 class CaptchaSolver:
     # TensorFlow 로그 레벨 설정
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+    # CUDA 프로세서 비활성화
+    os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
     # Keras batch_size 설정
     batch_size = 1
     # 캡차 이미지 픽셀 크기
