@@ -3,4 +3,5 @@
 /testimage
 /captcha.png
 /testserver
+/__pycache__
 *.h5
