@@ -70,7 +70,7 @@ class CaptchaSolver:
             batch_images = dt["image"]
             preds = self.prediction_model.predict(batch_images)
             pred_texts = self.decode_batch_predictions(preds)
-            return pred_texts.pop()
+            return pred_texts.pop().replace("[UNK]", "?")
 
 
 # 스크립트가 직접 실행되었을 때 테스트 함수 실행
