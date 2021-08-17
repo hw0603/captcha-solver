@@ -41,7 +41,10 @@ def api():
             path = os.path.join("./", fname)
             f.save(path)
             result = solver.predict(captcha_img=path)
-            os.remove(path)
+            try:
+                os.remove(path)
+            except FileNotFoundError:
+                ...
             return result
         else:
             return "File Not Exist"
