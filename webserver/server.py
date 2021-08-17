@@ -10,7 +10,10 @@ from captcha2str import CaptchaSolver # pylint: disable=import-error
 
 
 app = Flask(__name__, static_url_path="/static", static_folder="static")
+app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10MB 업로드 제한
+
 solver = CaptchaSolver(model="data.h5")
+
 # 캡차 이미지 URL
 url = "https://sugang.knu.ac.kr/Sugang/captcha"
 
