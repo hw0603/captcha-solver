@@ -1,7 +1,7 @@
 /bestmodel
 /captcha_images_v2
 /testimage
-/captcha.png
 /testserver
 /__pycache__
 *.h5
+*.png
