@@ -5,7 +5,8 @@ import time
 import sys
 import os
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+currentdir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.dirname(currentdir))
 from captcha2str import CaptchaSolver # pylint: disable=import-error
 
 
@@ -38,7 +39,7 @@ def api():
             fname = f.filename
             if not (fname.lower().endswith("png")):
                 return "Accept PNG ONLY"
-            path = os.path.join("./", fname)
+            path = os.path.join(currentdir, fname)
             f.save(path)
             result = solver.predict(captcha_img=path)
             try:
