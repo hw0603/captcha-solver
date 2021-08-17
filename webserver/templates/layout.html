@@ -1,0 +1,28 @@
+<!DOCTYPE HTML>
+<html lang="ko">
+
+<head>
+    <title>Captcha Solver</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <meta http-equiv="Accept-CH" content="device-memory, dpr, width, viewport-width, rtt, downlink, ect">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+</head>
+
+{%with messages = get_flashed_messages()%}
+{%if messages %}
+<script type="text/javascript">alert("{{messages[0]}}");</script>
+{%endif%}
+{%endwith%}
+
+<body>
+    {% block content %}
+    {% endblock %}
+</body>
+
+</html>

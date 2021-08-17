@@ -1,0 +1,62 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+    <div class="main-form">
+        <form>
+            <h2 class="text-center">Captcha Solver API</h2>
+            <p class="text-center bg-info">Simple Captcha Solver using TensorFlow RNN</p>
+            <p class="text-center small">AI will automatically recognizes characters<br>in the uploaded image.</p>
+            <div class="or-seperator"></div>
+            <br>
+            <div class="center-block">
+                <img id="uploaded_img" class="center-block" width="225" height="60"/>
+                <br>
+                <label for="upload_file" class="btn btn-success next-btn btn-block">Select Captcha File</label>
+                <input type="file" class="form-control" id="upload_file" name="upload_file" accept="image/png" style="display: none;">
+            </div>
+            <div class="or-seperator"></div>
+            <h1 class="text-center bg-success" id="captcha_result">Upload File First</h1>
+            <div class="or-seperator"></div>
+            <br>
+            <input type="button" id="submitBtn" class="btn btn-warning next-btn btn-block" value="Solve"></button>
+        </form>
+        <p class="text-center text-muted small">AUG 2021 from Altius</p>
+    </div>
+    <script type="text/javascript">
+        $(function () {
+            $("#upload_file").on('change', function() {
+                $("#captcha_result").text("Upload File First");
+                $('#uploaded_img').removeAttr('src');
+                readURL(this);
+            });
+        });
+        $("#submitBtn").on('click', function() {
+            $("#captcha_result").text("Loading..");
+            var formData = new FormData();
+            formData.append("upload_file", $("#upload_file")[0].files[0]);
+            $.ajax({
+                url: "/api",
+                type: "POST",
+                processData: false,
+                contentType: false,
+                data: formData,
+                success: function onData(data) {
+                    $("#captcha_result").text(data);
+                },
+                error: function onError(error) {
+                    $("#captcha_result").text("Error");
+                }
+            });
+        });
+        function readURL(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    $('#uploaded_img').attr('src', e.target.result);
+                    $("#captcha_result").text("Click Solve");
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+    </script>
+{% endblock %}

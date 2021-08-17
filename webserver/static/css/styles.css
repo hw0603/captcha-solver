@@ -1,0 +1,44 @@
+@font-face {
+    font-family: 'NanumSquare';
+    src: url(/static/font/NanumSquareR.eot);
+    src: url(/static/font/NanumSquareR.eot?#iefix) format('embedded-opentype')
+}
+
+body {
+    font-family: 'NanumSquare';
+}
+
+.main-form {
+    width: 385px;
+    margin: 30px auto;
+}
+
+.main-form form {
+    margin-bottom: 15px;
+    background: #f7f7f7;
+    box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.3);
+    padding: 30px;
+}
+
+.main-form h2 {
+    margin: 0 0 15px;
+}
+
+.form-control {
+    min-height: 38px;
+    border-radius: 2px;
+}
+
+.or-seperator {
+    margin-top: 20px;
+    text-align: center;
+    border-top: 1px solid #ccc;
+}
+
+.or-seperator i {
+    padding: 0 10px;
+    background: #f7f7f7;
+    position: relative;
+    top: -11px;
+    z-index: 1;
+}
