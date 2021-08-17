@@ -34,7 +34,7 @@ def api():
         if (f):
             fname = f.filename
             if not (fname.lower().endswith("png")):
-                return "Upload PNG ONLY"
+                return "Accept PNG ONLY"
             path = os.path.join("./", fname)
             f.save(path)
             result = solver.predict(captcha_img=path)
