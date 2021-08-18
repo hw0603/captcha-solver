@@ -35,6 +35,8 @@ def main_page():
 def api():
     if (request.method == 'POST'):
         f = request.files.get("upload_file")
+        if (request.form.get("checkonline")):
+            return "success"
         if (f):
             fname = f.filename
             if not (fname.lower().endswith("png")):
