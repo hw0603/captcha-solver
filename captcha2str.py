@@ -58,8 +58,6 @@ class CaptchaSolver:
 
     # 이미지를 인자로 받아서 예측한 문자열 반환
     def predict(self, captcha_img="captcha.png"):
-        # RAM 확보를 위해 세션 클리어
-        tf.keras.backend.clear_session()
         # Dataset 생성
         dataset = tf.data.Dataset.from_tensor_slices([f"{captcha_img}"])
         dataset = (
