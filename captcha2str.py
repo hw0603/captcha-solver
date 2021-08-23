@@ -41,15 +41,15 @@ class CaptchaSolver:
         img = tf.image.resize(img, [self.img_height, self.img_width])
         # 5. 이미지 가로세로 바꿈 -> 이미지의 가로와 시간 차원을 대응하기 위함
         img = tf.transpose(img, perm=[1, 0, 2])
-        # 6. 모델의 데이터 형태에 맞게 반환
-        return {"image": img}
+        # 6. 결과 반환
+        return img
 
-    # A utility function to decode the output of the network
+    # softmax 배열을 문자열로 디코드
     def decode_batch_predictions(self, pred):
         input_len = np.ones(pred.shape[0]) * pred.shape[1]
-        # Use greedy search. For complex tasks, you can use beam search
+        # Greedy Search 사용. 복잡한 작업에서는 Beam Search 사용 가능
         results = keras.backend.ctc_decode(pred, input_length=input_len, greedy=True)[0][0][:, :self.max_length]
-        # Iterate over the results and get back the text
+        # CTC Decode 결과에서 문자열 매핑
         output_text = []
         for res in results:
             res = tf.strings.reduce_join(self.num_to_char(res)).numpy().decode("utf-8")
@@ -58,19 +58,11 @@ class CaptchaSolver:
 
     # 이미지를 인자로 받아서 예측한 문자열 반환
     def predict(self, captcha_img="captcha.png"):
-        # Dataset 생성
-        dataset = tf.data.Dataset.from_tensor_slices([f"{captcha_img}"])
-        dataset = (
-            dataset.map(self.encode_single_sample, num_parallel_calls=tf.data.AUTOTUNE)
-            .batch(self.batch_size)
-            .prefetch(buffer_size=tf.data.AUTOTUNE)
-        )
-
-        for dt in dataset:
-            batch_images = dt["image"]
-            preds = self.prediction_model.predict(batch_images)
-            pred_texts = self.decode_batch_predictions(preds)
-            return pred_texts.pop().replace("[UNK]", "?")
+        img_data = self.encode_single_sample(captcha_img)
+        preds = self.prediction_model.predict(tf.reshape(img_data, shape=[-1, 150, 40, 1]))
+        pred_texts = self.decode_batch_predictions(preds)
+        
+        return pred_texts.pop().replace("[UNK]", "?")
 
 
 # 스크립트가 직접 실행되었을 때 테스트 함수 실행
