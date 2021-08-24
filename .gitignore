@@ -3,4 +3,5 @@
 /testimage
 /__pycache__
 *.h5
+*.tflite
 *.png
