@@ -90,7 +90,11 @@ class CaptchaSolverTFLite:
     # 이미지 전처리
     def preprocess(self, img_path, raw_bytes=False):
         # 0. raw_bytes 가 전달된 경우 BytesIO로 변환
-        img = self.io.BytesIO(img_path) if raw_bytes else img_path
+        if (raw_bytes):
+            stream = self.io.BytesIO(img_path)
+            img = stream
+        else:
+            img = img_path
         # 1. 이미지 로드
         img = self.Image.open(img)
         # 2. 이미지 디코드 후 그레이스케일 변환
@@ -101,7 +105,10 @@ class CaptchaSolverTFLite:
         img = np.array(img).astype(np.float32) / 255.0
         # 5. 이미지 가로세로 바꿈 -> 이미지의 가로와 시간 차원을 대응하기 위함
         img = np.transpose(np.reshape(img, [img_height, img_width, 1]), [1, 0, 2])
-        # 6. 결과 반환
+        # 6. BytesIO 사용한 경우 Stream close
+        if (raw_bytes):
+            stream.close()
+        # 7. 결과 반환
         return img
 
     # softmax 결과값 후처리

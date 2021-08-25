@@ -33,6 +33,7 @@ def main_page():
     encoded_img = base64.b64encode(captcha_file.getvalue())
     decoded_img = encoded_img.decode('utf-8')
     img_data = f"data:image/png;base64,{decoded_img}"
+    captcha_file.close()
 
     result = solver.predict(captcha_img=response.content, raw_bytes=True)
     
