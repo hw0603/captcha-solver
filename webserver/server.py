@@ -1,9 +1,10 @@
 from flask import Flask, request
 from flask.templating import render_template
 import requests
-import time
+import base64
 import sys
 import os
+import io
 
 currentdir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(currentdir))
@@ -13,23 +14,29 @@ from captcha2str import CaptchaSolver # pylint: disable=import-error
 app = Flask(__name__, static_url_path="/static", static_folder="static")
 app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10MB 업로드 제한
 
-solver = CaptchaSolver(model="data.tflite")
+solver = CaptchaSolver()
 
 # 캡차 이미지 URL
 url = "https://sugang.knu.ac.kr/Sugang/captcha"
 
 @app.route("/", methods=['GET', 'POST'])
 def main_page():
-    [os.remove(f"./static/{f}") for f in os.listdir('./static') if f.startswith('captcha_')]
-    filename = f"./static/captcha_{time.time()}.png"
     # 캡차 이미지 다운로드
-    with open(f"{filename}", "wb") as captcha_file:
-        response = requests.get(url)
-        captcha_file.write(response.content)
+    response = requests.get(url)
 
-    result = solver.predict(captcha_img=filename)
+    # 파일에 쓰기
+    captcha_file = io.BytesIO()
+    captcha_file.write(response.content)
+    captcha_file.seek(0)
+
+    # BytesIO 인코드/디코드
+    encoded_img = base64.b64encode(captcha_file.getvalue())
+    decoded_img = encoded_img.decode('utf-8')
+    img_data = f"data:image/png;base64,{decoded_img}"
+
+    result = solver.predict(captcha_img=response.content, raw_bytes=True)
     
-    return render_template("main.html", captcha=result, filename=filename[9:])
+    return render_template("main.html", captcha=result, img_data=img_data)
 
 @app.route("/api", methods=["GET", "POST"])
 def api():
@@ -41,13 +48,7 @@ def api():
             fname = f.filename
             if not (fname.lower().endswith("png")):
                 return "Accept PNG ONLY"
-            path = os.path.join(currentdir, fname)
-            f.save(path)
-            result = solver.predict(captcha_img=path)
-            try:
-                os.remove(path)
-            except FileNotFoundError:
-                ...
+            result = solver.predict(captcha_img=f.read(), raw_bytes=True)
             return result
         else:
             return "File Not Exist"

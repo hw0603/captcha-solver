@@ -33,9 +33,9 @@ class CaptchaSolverTF:
         self.prediction_model = keras.models.load_model(model, compile=False)
 
     # 이미지 전처리
-    def encode_single_sample(self, img_path):
+    def encode_single_sample(self, img_path, raw_bytes=False):
         # 1. 이미지 로드
-        img = self.tf.io.read_file(img_path)
+        img = img_path if raw_bytes else self.tf.io.read_file(img_path)
         # 2. PNG 이미지 디코드 이후 그레이스케일로 변환
         img = self.tf.io.decode_png(img, channels=1)
         # 3. 8bit([0, 255]) 데이터를 float32([0, 1]) 범위로 변환
@@ -60,8 +60,8 @@ class CaptchaSolverTF:
         return output_text
 
     # 이미지를 인자로 받아서 예측한 문자열 반환
-    def predict(self, captcha_img="captcha.png"):
-        img_data = self.encode_single_sample(captcha_img)
+    def predict(self, captcha_img="captcha.png", raw_bytes=False):
+        img_data = self.encode_single_sample(captcha_img, raw_bytes=raw_bytes)
         preds = self.prediction_model.predict(self.tf.reshape(img_data, shape=[-1, img_width, img_height, 1]))
         pred_texts = self.decode_batch_predictions(preds)
         
