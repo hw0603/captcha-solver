@@ -75,9 +75,11 @@ class CaptchaSolverTFLite:
         import tflite_runtime.interpreter as tflite
         from PIL import Image
         from itertools import groupby
+        import io
 
         self.Image = Image
         self.groupby = groupby
+        self.io = io
 
         # TFLite 인터프리터 설정
         self.interpreter = tflite.Interpreter(model_path=model)
@@ -86,9 +88,11 @@ class CaptchaSolverTFLite:
         self.output_details = self.interpreter.get_output_details()
 
     # 이미지 전처리
-    def preprocess(self, img_path):
+    def preprocess(self, img_path, raw_bytes=False):
+        # 0. raw_bytes 가 전달된 경우 BytesIO로 변환
+        img = self.io.BytesIO(img_path) if raw_bytes else img_path
         # 1. 이미지 로드
-        img = self.Image.open(img_path)
+        img = self.Image.open(img)
         # 2. 이미지 디코드 후 그레이스케일 변환
         img = img.convert("L")
         # 3. 이미지 크기에 맞게 리사이징
@@ -113,9 +117,9 @@ class CaptchaSolverTFLite:
         return result
 
     # 이미지를 인자로 받아서 예측한 문자열 반환
-    def predict(self, captcha_img="captcha.png"):
+    def predict(self, captcha_img="captcha.png", raw_bytes=False):
         # 캡챠 이미지 전처리
-        image = np.reshape(self.preprocess(captcha_img), [-1, img_width, img_height, 1])
+        image = np.reshape(self.preprocess(captcha_img, raw_bytes=raw_bytes), [-1, img_width, img_height, 1])
         # 인터프리터 Tensor 설정
         self.interpreter.set_tensor(self.input_details[0]['index'], image)
         # 인터프리터 호출
