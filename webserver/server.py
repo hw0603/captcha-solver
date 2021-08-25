@@ -1,5 +1,6 @@
 from flask import Flask, request
 from flask.templating import render_template
+import threading
 import requests
 import base64
 import sys
@@ -15,6 +16,7 @@ app = Flask(__name__, static_url_path="/static", static_folder="static")
 app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10MB 업로드 제한
 
 solver = CaptchaSolver()
+lock = threading.Lock()
 
 # 캡차 이미지 URL
 url = "https://sugang.knu.ac.kr/Sugang/captcha"
@@ -35,7 +37,8 @@ def main_page():
     img_data = f"data:image/png;base64,{decoded_img}"
     captcha_file.close()
 
-    result = solver.predict(captcha_img=response.content, raw_bytes=True)
+    with lock:
+        result = solver.predict(captcha_img=response.content, raw_bytes=True)
     
     return render_template("main.html", captcha=result, img_data=img_data)
 
@@ -49,7 +52,8 @@ def api():
             fname = f.filename
             if not (fname.lower().endswith("png")):
                 return "Accept PNG ONLY"
-            result = solver.predict(captcha_img=f.read(), raw_bytes=True)
+            with lock:
+                result = solver.predict(captcha_img=f.read(), raw_bytes=True)
             return result
         else:
             return "File Not Exist"
