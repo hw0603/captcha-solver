@@ -41,6 +41,9 @@
                 contentType: false,
                 data: formData,
                 success: function onData(data) {
+                    if (data == '') {
+                        data = "No Characters"
+                    }
                     $("#captcha_result").text(data);
                 },
                 error: function onError(error) {
