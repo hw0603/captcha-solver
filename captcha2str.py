@@ -144,6 +144,7 @@ class CaptchaSolverTFLite:
 def module_test(filename="captcha.png"):
     import requests
     import time
+    import os
 
     # 캡차 이미지 URL
     url = "https://sugang.knu.ac.kr/Sugang/captcha"
@@ -173,6 +174,7 @@ def module_test(filename="captcha.png"):
         try:
             input()
         except KeyboardInterrupt:
+            os.remove(f"./{filename}")
             break
 
 

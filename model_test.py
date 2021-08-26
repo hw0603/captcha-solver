@@ -1,135 +1,135 @@
-from keras.models import load_model
-import matplotlib.pyplot as plt
-import numpy as np
-import tensorflow as tf
-from tensorflow import keras
+from captcha2str import CaptchaSolver # pylint: disable=import-error
 from pathlib import Path
+import matplotlib.pyplot as plt
+import matplotlib.image as Image
+import random
+import requests
+import time
 import os
-
-# Batch size for training and validation
-batch_size = 25
-
-# Desired image dimensions
-img_width = 150
-img_height = 40
-
-prediction_model = load_model('data.h5')
-# prediction_model.summary()
-max_length = 4
-
-# Path to the data directory
-data_dir = Path("./testimage/")
-
-# Get list of all the images
-images = sorted(list(map(str, list(data_dir.glob("*.png")))))
-labels = [img.split(os.path.sep)[-1].split(".png")[0] for img in images]
-# characters = set(char for label in labels for char in label)
-# characters = ['k', 'y', 'f', '3', '4', '5', '6', 'r', 'h', 'n', 'b', 'p', 'e', 'd', 'c', 'g', 'w', 'm', 'x', '8', '2', '7', 'a']
-characters = "kyf3456rhnbpedcgwmx827a_.ijloqstuvz019"
-# characters = "abcdefghijklmnopqrstuvwxyz0123456789_. "
-
-# Mapping characters to integers
-char_to_num = keras.layers.experimental.preprocessing.StringLookup(vocabulary=list(characters), mask_token=None)
-
-# Mapping integers back to original characters
-num_to_char = keras.layers.experimental.preprocessing.StringLookup(
-    vocabulary=char_to_num.get_vocabulary(), mask_token=None, invert=True
-)
+import io
 
 
-def split_data(images, labels, train_size=0.1, shuffle=True):
-    # 1. Get the total size of the dataset
-    size = len(images)
-    # 2. Make an indices array and shuffle it, if required
-    indices = np.arange(size)
-    if shuffle:
-        np.random.shuffle(indices)
-    # 3. Get the size of training samples
-    # train_samples = int(size * train_size)
-    # 4. Split data into training and validation sets
-    # x_train, y_train = images[indices[:train_samples]], labels[indices[:train_samples]]
-    x_valid, y_valid = images[indices[:]], labels[indices[:]]
-    return x_valid, y_valid
+# TensorFlow 로그 레벨 설정
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+# CUDA 프로세서 비활성화
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 
-def encode_single_sample(img_path, label):
-    # 1. Read image
-    img = tf.io.read_file(img_path)
-    # 2. Decode and convert to grayscale
-    img = tf.io.decode_png(img, channels=1)
-    # 3. Convert to float32 in [0, 1] range
-    img = tf.image.convert_image_dtype(img, tf.float32)
-    # 4. Resize to the desired size
-    img = tf.image.resize(img, [img_height, img_width])
-    # 5. Transpose the image because we want the time
-    # dimension to correspond to the width of the image.
-    img = tf.transpose(img, perm=[1, 0, 2])
-    # 6. Map the characters in label to numbers
-    label = char_to_num(tf.strings.unicode_split(label, input_encoding="UTF-8"))
-    # 7. Return a dict as our model is expecting two inputs
-    return {"image": img, "label": label}
+# 테스트 데이터 경로
+test_folder = "./testimage"
+data_dir = Path(test_folder)
 
 
-# Splitting data into training and validation sets
-x_valid, y_valid = split_data(np.array(images), np.array(labels))
-
-validation_dataset = tf.data.Dataset.from_tensor_slices((x_valid, y_valid))
-validation_dataset = (
-    validation_dataset.map(encode_single_sample, num_parallel_calls=tf.data.AUTOTUNE)
-    .batch(batch_size)
-    .prefetch(buffer_size=tf.data.AUTOTUNE)
-)
-
-# A utility function to decode the output of the network
-def decode_batch_predictions(pred):
-    input_len = np.ones(pred.shape[0]) * pred.shape[1]
-    # Use greedy search. For complex tasks, you can use beam search
-    results = keras.backend.ctc_decode(pred, input_length=input_len, greedy=True)[0][0][:, :max_length]
-    # Iterate over the results and get back the text
-    output_text = []
-    for res in results:
-        res = tf.strings.reduce_join(num_to_char(res)).numpy().decode("utf-8")
-        output_text.append(res)
-    return output_text
+# 모델 데이터 경로
+model_path = "./data.h5"
 
 
+# 인코드/디코드 시 사용할 characters
+characters = "kyf3456rhnbpedcgwmx827a"
+characters = "".join(sorted(characters))
 
-#  Let's check results on some validation samples
-for batch in validation_dataset.take(1):
-    batch_images = batch["image"]
 
-    preds = prediction_model.predict(batch_images)
-    pred_texts = decode_batch_predictions(preds)
+def getImage(path=test_folder, count=1):
+    url = "https://sugang.knu.ac.kr/Sugang/captcha"
+    for _ in range(count):
+        file_name = f"captcha_{str(time.time()).ljust(18, '0')}.png"
+        with open(f"{path}/{file_name}", "wb") as file:
+            response = requests.get(url)
+            file.write(response.content)
 
+    print(f"캡차 이미지 {count}개 다운로드 완료")
+
+
+def modelinfo():
+    # CaptchaSolver 인스턴스 생성
+    solver = CaptchaSolver(model=model_path)
+    solver.prediction_model.summary()
+
+
+def visualize():
+    # 모든 이미지의 리스트 구함
+    images = sorted(list(map(str, list(data_dir.glob("*.png")))))
+    
+    # CaptchaSolver 인스턴스 생성
+    solver = CaptchaSolver(model=model_path)
+
+    # 랜덤하게 샘플 선택
+    images_list = [img for img in random.sample(images, 25)]
+    result_list = [solver.predict(captcha_img=img_path) for img_path in images_list]
+
+    # 선택한 샘플 시각화
     _, ax = plt.subplots(5, 5, figsize=(15, 5))
-    for i in range(len(pred_texts)):
-        img = (batch_images[i, :, :, 0] * 255).numpy().astype(np.uint8)
-        img = img.T
-        title = f"Prediction: {pred_texts[i]}"
+    for i in range(len(result_list)):
+        img = Image.imread(images_list[i])
+        title = f"Prediction: {result_list[i]}"
         ax[i // 5, i % 5].imshow(img, cmap="gray")
         ax[i // 5, i % 5].set_title(title)
         ax[i // 5, i % 5].axis("off")
-plt.show()
+    plt.show()
 
-# 파일명 변경
-# for batch in validation_dataset:
-#     batch_images = batch["image"]
-#     batch_labels = batch["label"]
 
-#     preds = prediction_model.predict(batch_images)
-#     pred_texts = decode_batch_predictions(preds)
+def makeLable(path=test_folder):
+    # 모든 이미지의 리스트 구함
+    images = sorted(list(map(str, list(data_dir.glob("*.png")))))
+    labels = (img.split(os.path.sep)[-1].split(".png")[0] for img in images)
 
-#     orig_texts = []
-#     for label in batch_labels:
-#         label = tf.strings.reduce_join(num_to_char(label)).numpy().decode("utf-8")
-#         orig_texts.append(label)
+    # CaptchaSolver 인스턴스 생성
+    solver = CaptchaSolver(model=model_path)
 
-#     for filename, captcha in zip(orig_texts, pred_texts):
-#         src = os.path.join("./testimage", f"{filename}.png")
-#         dst = os.path.join("./testimage", f"{captcha}.png")
-#         try:
-#             os.rename(src, dst)
-#         except FileExistsError:
-#             print("파일이 이미 존재합니다.")
-#             os.remove(src)
-#         print(f"{src} -> {dst}")
+    # 캡차 해독하여 리스트 생성
+    result_list = (solver.predict(captcha_img=img_path) for img_path in images)
+
+    for filename, captcha in zip(labels, result_list):
+        src = os.path.join(f"{path}", f"{filename}.png")
+        dst = os.path.join(f"{path}", f"{captcha}.png")
+        try:
+            os.rename(src, dst)
+        except FileExistsError:
+            print("파일이 이미 존재합니다.")
+            os.remove(src)
+        print(f"{src} -> {dst}")
+
+
+def apitest(api_url="127.0.0.1:3000/api"):
+    url = "https://sugang.knu.ac.kr/Sugang/captcha"
+    try:
+        while (True):
+            # 캡차 이미지 다운로드
+            response = requests.get(url)
+
+            # 스트림에 쓰기
+            captcha_file = io.BytesIO()
+            captcha_file.write(response.content)
+            captcha_file.name = "captcha.png"
+            captcha_file.seek(0)
+
+            file = {"upload_file": ("captcha.png", captcha_file.getvalue())}
+
+            t = time.time()
+            try:
+                result = requests.post(f"http://{api_url}", files=file, timeout=20).text
+            except Exception as e:
+                result = e
+
+            print(result, end=" => ")
+            print(time.time() - t)
+            
+            if (len(result) != 4 or "?" in result):
+                print("^-------------------------------")
+                print("[오류발생]")
+                print(result)
+                print("-------------------------------^")
+                with open(f"./{time.time()}_Error.png", "wb") as sf:
+                    captcha_file.seek(0)
+                    sf.write(captcha_file.read())
+            captcha_file.close()
+    except KeyboardInterrupt:
+        return
+
+
+
+
+# getImage(count=50)
+# visualize()
+# makeLable()
+apitest()
