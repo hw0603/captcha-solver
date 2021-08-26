@@ -7,6 +7,7 @@ img_width, img_height = 150, 40
 max_length = 4
 # 데이터 처리에 사용할 vocabulary
 characters = "kyf3456rhnbpedcgwmx827a"
+characters = "".join(sorted(characters))
 
 
 class CaptchaSolverTF:
