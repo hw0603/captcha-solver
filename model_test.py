@@ -1,3 +1,4 @@
+from cgi import test
 from captcha2str import CaptchaSolver # pylint: disable=import-error
 from pathlib import Path
 import matplotlib.pyplot as plt
@@ -25,12 +26,15 @@ model_path = "./data.h5"
 
 
 # 인코드/디코드 시 사용할 characters
-characters = "kyf3456rhnbpedcgwmx827a"
+characters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 characters = "".join(sorted(characters))
 
 
+# [Deprecated] 서버에서 캡차 이미지 다운로드
 def getImage(path=test_folder, count=1):
-    url = "https://sugang.knu.ac.kr/Sugang/captcha"
+    raise Exception(f"Deprecated function. Please save images to '{test_folder}' manually.")
+
+    url = "https://some-test-url/"
     for _ in range(count):
         file_name = f"captcha_{str(time.time()).ljust(18, '0')}.png"
         with open(f"{path}/{file_name}", "wb") as file:
@@ -40,12 +44,14 @@ def getImage(path=test_folder, count=1):
     print(f"캡차 이미지 {count}개 다운로드 완료")
 
 
+# 예측 모델의 정보 출력
 def modelinfo():
     # CaptchaSolver 인스턴스 생성
     solver = CaptchaSolver(model=model_path)
     solver.prediction_model.summary()
 
 
+# 예측 결과 시각화
 def visualize():
     # 모든 이미지의 리스트 구함
     images = sorted(list(map(str, list(data_dir.glob("*.png")))))
@@ -68,6 +74,7 @@ def visualize():
     plt.show()
 
 
+# test_folder 내의 모든 이미지 파일명을 예측 결과값으로 변경
 def makeLable(path=test_folder):
     # 모든 이미지의 리스트 구함
     images = sorted(list(map(str, list(data_dir.glob("*.png")))))
@@ -90,46 +97,39 @@ def makeLable(path=test_folder):
         print(f"{src} -> {dst}")
 
 
+# Captcha Solver API 테스트
 def apitest(api_url="127.0.0.1:3000/api"):
-    url = "https://sugang.knu.ac.kr/Sugang/captcha"
     try:
-        while (True):
-            # 캡차 이미지 다운로드
-            response = requests.get(url)
+        for (root, directories, files) in os.walk(test_folder):
+            for f in files:
+                file_path = os.path.join(root, f)
 
-            # 스트림에 쓰기
-            captcha_file = io.BytesIO()
-            captcha_file.write(response.content)
-            captcha_file.name = "captcha.png"
-            captcha_file.seek(0)
+                with open(file_path, "rb") as captcha_file:
+                    file = {"upload_file": ("captcha.png", captcha_file)}
 
-            file = {"upload_file": ("captcha.png", captcha_file.getvalue())}
+                    t = time.time()
+                    try:
+                        result = requests.post(f"http://{api_url}", files=file, timeout=20).text
+                    except Exception as e:
+                        result = e
 
-            t = time.time()
-            try:
-                result = requests.post(f"http://{api_url}", files=file, timeout=20).text
-            except Exception as e:
-                result = e
-
-            print(result, end=" => ")
-            print(time.time() - t)
-            
-            if (len(result) != 4 or "?" in result):
-                print("^-------------------------------")
-                print("[오류발생]")
-                print(result)
-                print("-------------------------------^")
-                with open(f"./{time.time()}_Error.png", "wb") as sf:
-                    captcha_file.seek(0)
-                    sf.write(captcha_file.read())
-            captcha_file.close()
+                    print(f"{f} -> {result}", end=" => ")
+                    print(time.time() - t)
+                    
+                    if (len(result) != 4 or "?" in result):
+                        print("^-------------------------------")
+                        print("[오류발생]")
+                        print(result)
+                        print("-------------------------------^")
+                        with open(f"./{time.time()}_Error.png", "wb") as sf:
+                            captcha_file.seek(0)
+                            sf.write(captcha_file.read())
+        
     except KeyboardInterrupt:
         return
 
 
-
-
-# getImage(count=50)
+# modelinfo()
 # visualize()
 # makeLable()
-apitest()
+apitest(api_url="192.168.0.27:3000/api")
