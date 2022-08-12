@@ -2,11 +2,11 @@
 import numpy as np
 
 # 캡차 이미지 픽셀 크기
-img_width, img_height = 150, 40
+img_width, img_height = 140, 35
 # 캡차 문자열 최대 길이
 max_length = 4
 # 데이터 처리에 사용할 vocabulary
-characters = "kyf3456rhnbpedcgwmx827a"
+characters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 characters = "".join(sorted(characters))
 
 
@@ -37,15 +37,28 @@ class CaptchaSolverTF:
     def encode_single_sample(self, img_path, raw_bytes=False):
         # 1. 이미지 로드
         img = img_path if raw_bytes else self.tf.io.read_file(img_path)
-        # 2. PNG 이미지 디코드 이후 그레이스케일로 변환
-        img = self.tf.io.decode_png(img, channels=1)
-        # 3. 8bit([0, 255]) 데이터를 float32([0, 1]) 범위로 변환
+
+        # 2. PNG 이미지 디코드 (원본 파일의 채널(RGBA 4채널) 그대로 사용)
+        img = self.tf.io.decode_png(img, channels=0)
+
+        # 3. R, G, B, A 채널을 분리한 후 A 채널만 추출하여 그레이스캐일로 변환
+        r, g, b, a = img[:, :, 0], img[:, :, 1], img[:, :, 2], img[:, :, 3]
+        rgb = self.tf.stack([a], axis=-1)
+        img = rgb
+
+        # 4. 8bit([0, 255]) 데이터를 float32([0, 1]) 범위로 변환
         img = self.tf.image.convert_image_dtype(img, self.tf.float32)
-        # 4. 이미지 크기에 맞게 리사이징
+
+        # 5. 인식률 향상을 위해 이미지를 이진화(Binarization) 함
+        img = self.tf.where(img > 0, 1, 0)
+
+        # 6. 이미지 크기에 맞게 리사이징
         img = self.tf.image.resize(img, [img_height, img_width])
-        # 5. 이미지 가로세로 바꿈 -> 이미지의 가로와 시간 차원을 대응하기 위함
+        
+        # 7. 이미지 가로세로 바꿈 -> 이미지의 가로와 시간 차원을 대응하기 위함
         img = self.tf.transpose(img, perm=[1, 0, 2])
-        # 6. 결과 반환
+        
+        # 8. 결과 반환
         return img
 
     # softmax 배열을 문자열로 디코드
@@ -96,20 +109,33 @@ class CaptchaSolverTFLite:
             img = stream
         else:
             img = img_path
+
         # 1. 이미지 로드
         img = self.Image.open(img)
-        # 2. 이미지 디코드 후 그레이스케일 변환
-        img = img.convert("L")
-        # 3. 이미지 크기에 맞게 리사이징
+
+        # 2. 이미지 크기에 맞게 리사이징
         img = img.resize((img_width, img_height))
-        # 4. 8bit([0, 255]) 데이터를 float32([0, 1]) 범위로 변환
+        
+        # 3. 이미지 디코드 후 그레이스케일 변환
+        img = np.array(img)
+        r, g, b, a = img[:, :, 0], img[:, :, 1], img[:, :, 2], img[:, :, 3]
+        rgb = np.stack([a], axis=-1)
+        img = rgb
+
+        # 4. 인식률 향상을 위해 이미지를 이진화(Binarization) 함
+        img = np.where(img > 0, 255, 0)
+
+        # 5. 8bit([0, 255]) 데이터를 float32([0, 1]) 범위로 변환
         img = np.array(img).astype(np.float32) / 255.0
-        # 5. 이미지 가로세로 바꿈 -> 이미지의 가로와 시간 차원을 대응하기 위함
+
+        # 6. 이미지 가로세로 바꿈 -> 이미지의 가로와 시간 차원을 대응하기 위함
         img = np.transpose(np.reshape(img, [img_height, img_width, 1]), [1, 0, 2])
-        # 6. BytesIO 사용한 경우 Stream close
+
+        # 7. BytesIO 사용한 경우 Stream close
         if (raw_bytes):
             stream.close()
-        # 7. 결과 반환
+
+        # 8. 결과 반환
         return img
 
     # softmax 결과값 후처리
@@ -141,13 +167,9 @@ class CaptchaSolverTFLite:
 
 
 # 스크립트가 직접 실행되었을 때 테스트 함수 실행
-def module_test(filename="captcha.png"):
-    import requests
+def module_test(dir_path="./captcha_images"):
     import time
     import os
-
-    # 캡차 이미지 URL
-    url = "https://sugang.knu.ac.kr/Sugang/captcha"
 
     # TFLite, TensorFlow 중 사용할 모듈 선택
     try:
@@ -161,25 +183,24 @@ def module_test(filename="captcha.png"):
     finally:
         captchasolver = CaptchaSolver()
 
-    while (True):
-        # 캡차 이미지 다운로드
-        with open(f"./{filename}", "wb") as captcha_file:
-            response = requests.get(url)
-            captcha_file.write(response.content)
+    # dir_path의 경로 안에 있는 모든 파일들을 CaptchaSolver로 전달 후 결과 출력
+    for (root, directories, files) in os.walk(dir_path):
+        for file in files:
+            file_path = os.path.join(root, file)
 
-        t = time.time()
-        print(captchasolver.predict(filename), end=" => ")
-        print(time.time() - t)
+            t = time.time()
+            result = captchasolver.predict(file_path)
+            print(f"{file} -> {result}", end=" => ")
+            print(time.time() - t)
 
-        try:
-            input()
-        except KeyboardInterrupt:
-            os.remove(f"./{filename}")
-            break
+            # 추론 결과가 잘못된 경우 오류 메시지 출력
+            if ("?" in result):
+                print(f"{file} -> {result}")
+                print("---> 오류")
 
 
 if __name__ == "__main__":
-    module_test(filename="captcha.png")
+    module_test(dir_path="./captcha_images/new_server/labeled_image")
 else:
     try:
         import tflite_runtime.interpreter as tflite
