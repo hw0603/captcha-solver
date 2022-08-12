@@ -7,7 +7,6 @@ import random
 import requests
 import time
 import os
-import io
 
 
 # TensorFlow 로그 레벨 설정
@@ -132,4 +131,4 @@ def apitest(api_url="127.0.0.1:3000/api"):
 # modelinfo()
 # visualize()
 # makeLable()
-apitest(api_url="192.168.0.27:3000/api")
+apitest()
