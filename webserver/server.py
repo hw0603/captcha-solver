@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, send_file
 from flask.templating import render_template
 import threading
 import random
@@ -63,6 +63,12 @@ def api():
             return "File Not Exist"
     else:
         return render_template("api.html")
+
+@app.route("/getsample")
+def getsample():
+    file_name = f"{sample_dir}/captcha_{random.randint(1, sample_file_cnt)}.png"
+    return send_file(file_name, mimetype="image/png",
+                     attachment_filename=f"sample_{time.time()}.png", as_attachment=True)
 
 
 if __name__ == "__main__":
