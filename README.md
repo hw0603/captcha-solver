@@ -18,7 +18,7 @@ To apply TFLite, install TFLite using the command `pip install tflite_runtime`, 
   
 TensorFlow Lite builtin operator library only supports a limited number of TensorFlow operators. Since CaptchaSolver also uses operators that are not builtin operators, you will need to enable the usage of `Custom OP`. (see https://www.tensorflow.org/lite/guide/ops_select)  
   
-Thanks to @PINTO0309, you can find pre-built python wheel with `Custom OP` enabled for arm devices.  
+Thanks to @PINTO0309, you can find pre-built python wheel with `Custom OP` enabled for arm devices [HERE](https://github.com/PINTO0309/TensorflowLite-bin).  
 Rather than installing official `tflite_runtime`, install the proper `.whl` with command `pip install ${your_whl_file_name}`
 
 ## Screenshots
