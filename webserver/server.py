@@ -1,8 +1,9 @@
 from flask import Flask, request
 from flask.templating import render_template
 import threading
-import requests
+import random
 import base64
+import time
 import sys
 import os
 import io
@@ -18,27 +19,30 @@ app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10MB 업로드 제한
 solver = CaptchaSolver()
 lock = threading.Lock()
 
-# 캡차 이미지 URL
-url = "https://sugang.knu.ac.kr/Sugang/captcha"
+random.seed(time.time())
+
+# 샘플 캡차 이미지가 저장된 폴더 경로
+sample_dir = "../captcha_images/new_server/unlabeled_image"
+sample_file_cnt = 50000
 
 @app.route("/", methods=['GET', 'POST'])
 def main_page():
-    # 캡차 이미지 다운로드
-    response = requests.get(url)
 
-    # 파일에 쓰기
-    captcha_file = io.BytesIO()
-    captcha_file.write(response.content)
-    captcha_file.seek(0)
+    file_path = f"{sample_dir}/captcha_{random.randint(1, sample_file_cnt)}.png"
+    with open(file_path, "rb") as f:
+        # 파일 객체를 BytesIO로 변환
+        captcha_file = io.BytesIO(f.read())
 
-    # BytesIO 인코드/디코드
-    encoded_img = base64.b64encode(captcha_file.getvalue())
-    decoded_img = encoded_img.decode('utf-8')
-    img_data = f"data:image/png;base64,{decoded_img}"
-    captcha_file.close()
+        # BytesIO 인코드/디코드
+        encoded_img = base64.b64encode(captcha_file.getvalue())
+        decoded_img = encoded_img.decode('utf-8')
+        img_data = f"data:image/png;base64,{decoded_img}"
+
+        # BytesIO close
+        captcha_file.close()
 
     with lock:
-        result = solver.predict(captcha_img=response.content, raw_bytes=True)
+        result = solver.predict(captcha_img=file_path, raw_bytes=False)
     
     return render_template("main.html", captcha=result, img_data=img_data)
 

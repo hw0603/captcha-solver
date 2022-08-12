@@ -5,11 +5,11 @@
         <form>
             <h2 class="text-center">Captcha Solver API</h2>
             <p class="text-center bg-info">TensorFlow RNN Captcha Solver API</p>
-            <p class="text-center small">You can download sample captcha image <a href="https://sugang.knu.ac.kr/Sugang/captcha" target="_blank">HERE</a></p>
+            <p class="text-center small">captcha image type: 140x35xRGBA32(PNG)</p>
             <div class="or-seperator"></div>
             <br>
             <div class="center-block">
-                <img id="uploaded_img" class="center-block" width="225" height="60"/>
+                <img id="uploaded_img" class="center-block" width="280" height="70"/>
                 <br>
                 <label for="upload_file" class="btn btn-success next-btn btn-block">Select Captcha File</label>
                 <input type="file" class="form-control" id="upload_file" name="upload_file" accept="image/png" style="display: none;">
@@ -20,7 +20,7 @@
             <br>
             <input type="button" id="submitBtn" class="btn btn-warning next-btn btn-block" value="Solve"></button>
         </form>
-        <p class="text-center text-muted small">AUG 2021 from Altius</p>
+        <p class="text-center text-muted small">AUG 2022 by Altius</p>
     </div>
     <script type="text/javascript">
         $(function () {
